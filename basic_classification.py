@@ -58,7 +58,7 @@ model = keras.Sequential([
     # after flattening, dense (fully-connected) neural layers are used
     # first has 128 nodes (neurons)
     keras.layers.Dense(128, activation=tf.nn.relu),
-    # second is 10 node softmax lyer, returns 10 prob scores that sum to 1
+    # second is 10 node softmax layer, returns 10 prob scores that sum to 1
     # each node has a score, indicating prob that current img is a member of one of the 10 classes
     keras.layers.Dense(10, activation=tf.nn.softmax)
 ])
@@ -96,4 +96,84 @@ print('Highest confidence:', np.argmax(predictions[0]))
 # check test label for correctness
 test_labels[0]
 
+# graph to observe entire set of 10 class predictions
+def plot_image(i, predictions_array, true_label, img):
+    predictions_array, true_label, img = predictions_array[i], true_label[i], img[i]
+    plt.grid(False)
+    plt.xticks([])
+    plt.yticks([])
 
+    plt.imshow(img, cmap=plt.cm.binary)
+
+    predicted_label = np.argmax(predictions_array)
+    if predicted_label == true_label:
+        color = 'blue'
+    else:
+        color = 'red'
+    
+    plt.xlabel("{} {:2.0f}% ({})".format(class_names[predicted_label],100*np.max(predictions_array),class_names[true_label]),color=color)
+
+def plot_value_array(i, predictions_array, true_label):
+  predictions_array, true_label = predictions_array[i], true_label[i]
+  plt.grid(False)
+  plt.xticks([])
+  plt.yticks([])
+  thisplot = plt.bar(range(10), predictions_array, color="#777777")
+  plt.ylim([0, 1])
+  predicted_label = np.argmax(predictions_array)
+  
+  thisplot[predicted_label].set_color('red')
+  thisplot[true_label].set_color('blue')
+
+# now examine 0th image, predictions, and prediction array
+i = 0
+plt.figure(figsize=(6,3))
+plt.subplot(1,2,1)
+plot_image(i, predictions, test_labels, test_images)
+plt.subplot(1,2,2)
+plot_value_array(i, predictions, test_labels)
+plt.show()
+
+i = 12
+plt.figure(figsize=(6,3))
+plt.subplot(1,2,1)
+plot_image(i, predictions, test_labels, test_images)
+plt.subplot(1,2,2)
+plot_value_array(i, predictions,  test_labels)
+plt.show()
+
+# next, plot several images with predictions
+# correct are blue, incorrect red
+# number gives % (out of 100) for the predicted label
+# can be wrong even with high confidence
+
+# plot first x test images, predicted label, and true label
+num_rows = 5
+num_cols = 3
+num_images = num_rows*num_cols
+plt.figure(figsize=(2*2*num_cols, 2*num_rows))
+for i in range(num_images):
+    plt.subplot(num_rows, 2*num_cols, 2*i+1)
+    plot_image(i, predictions, test_labels, test_images)
+    plt.subplot(num_rows, 2*num_cols, 2*i+2)
+    plot_value_array(i, predictions, test_labels)
+plt.show()
+
+# pull image from test dataset
+img = test_labels[0]
+print(img.shape)
+
+# add image to a batch where it is only member
+img = (np.expand_dims(img,0))
+print(img.shape)
+
+# predict following image:
+predictions_single = model.predict(img)
+print(predictions_single)
+plot_value_array(0, predictions_single, test_labels)
+plt.xticks(range(10), class_names, rotation=45)
+plt.show()
+
+# grab predictions for only image in batch
+prediction_result = np.argmax(predictions_single[0])
+print(prediction_result)
