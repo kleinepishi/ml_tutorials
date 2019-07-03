@@ -1,5 +1,9 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import os
+
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
 import tensorflow as tf
 from tensorflow import keras
 
@@ -44,3 +48,76 @@ plt.plot(train_data[0])
 # to minimize loss, will need to learn compressed representations that have higher predictive power
 # if you make model too small, will have trouble fitting to training data
 # must balance between too much and not enough capacity
+
+# to start, best to begin with few layers and parameters and then build up from there
+# until you begin to see diminishing returns on validation loss
+# for example, first start with simple model using just Dense layers as baseline
+# will create smaller and larger version, then compare
+baseline_model = keras.Sequential([
+    # 'input_shape' is only required so '.summary' will function
+    keras.layers.Dense(16, activation=tf.nn.relu, input_shape=(NUM_WORDS,)),
+    keras.layers.Dense(16, activation=tf.nn.relu),
+    keras.layers.Dense(1, activation=tf.nn.sigmoid)
+])
+
+baseline_model.compile(optimizer='adam', loss= 'binary_crossentropy', metrics=['accuracy', 'binary_crossentropy'])
+baseline_model.summary()
+
+baseline_history = baseline_model.fit(train_data, train_labels, epochs=20, batch_size=512, validation_data=(test_data, test_labels), verbose=2)
+
+# now generate a similar model below with less hidden units
+smaller_model = keras.Sequential([
+    # 'input_shape' is only required so '.summary' will function
+    keras.layers.Dense(4, activation=tf.nn.relu, input_shape=(NUM_WORDS,)),
+    keras.layers.Dense(4, activation=tf.nn.relu),
+    keras.layers.Dense(1, activation=tf.nn.sigmoid)
+])
+
+smaller_model.compile(optimizer='adam', loss= 'binary_crossentropy', metrics=['accuracy', 'binary_crossentropy'])
+smaller_model.summary()
+
+smaller_history = smaller_model.fit(train_data, train_labels, epochs=20, batch_size=512, validation_data=(test_data, test_labels), verbose=2)
+
+# for comparison purposes, we make an even larger model than baseline to demonstrate how quickly overfitting occurs
+bigger_model = keras.models.Sequential([
+    keras.layers.Dense(512, activation=tf.nn.relu, input_shape=(NUM_WORDS,)),
+    keras.layers.Dense(512, activation=tf.nn.relu),
+    keras.layers.Dense(1, activation=tf.nn.sigmoid)
+])
+
+bigger_model.compile(optimizer='adam',
+                     loss='binary_crossentropy',
+                     metrics=['accuracy','binary_crossentropy'])
+
+bigger_model.summary()
+
+bigger_history = bigger_model.fit(train_data, train_labels,
+                                  epochs=20,
+                                  batch_size=512,
+                                  validation_data=(test_data, test_labels),
+                                  verbose=2)
+
+# plot training and validation loss
+# solid lines denote training loss
+# dashed lines show validation loss
+# lower validation loss indicates better model
+
+def plot_history(histories, key='binary_crossentropy'):
+  plt.figure(figsize=(16,10))
+
+  for name, history in histories:
+    val = plt.plot(history.epoch, history.history['val_'+key],
+                   '--', label=name.title()+' Val')
+    plt.plot(history.epoch, history.history[key], color=val[0].get_color(),
+             label=name.title()+' Train')
+
+  plt.xlabel('Epochs')
+  plt.ylabel(key.replace('_',' ').title())
+  plt.legend()
+
+  plt.xlim([0,max(history.epoch)])
+
+
+plot_history([('baseline', baseline_history),
+              ('smaller', smaller_history),
+              ('bigger', bigger_history)])
