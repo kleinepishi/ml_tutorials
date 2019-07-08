@@ -121,3 +121,77 @@ def plot_history(histories, key='binary_crossentropy'):
 plot_history([('baseline', baseline_history),
               ('smaller', smaller_history),
               ('bigger', bigger_history)])
+
+# add weight regularization
+# occams razer, applies to models learned by neural networks (explanation most likely is the simplest one)
+# given training data and a network architecture, multiple sets of weights values that could explain data
+# simpler models are less likely to everfit than complex ones
+# simple model = fewer params, or distribution of param value has less entropy
+# easy way to prevent overfitting, put constraints on complexity of network
+# do this by forcing weights to only take small values (weight regularization)
+# done by adding to loss function of network, cost associated with having large weights
+
+# two ways, L1 and L2 regularization
+# L1: cost added is proportional to absolute value of weights coefficients
+# L2: cost added is proportional to square of the value of the weights coefficients.
+# also known as weight decay in context of NN.
+
+l2_model = keras.models.Sequential([
+    keras.layers.Dense(16, kernel_regularizer=keras.regularizers.l2(0.001),
+                       activation=tf.nn.relu, input_shape=(NUM_WORDS,)),
+    keras.layers.Dense(16, kernel_regularizer=keras.regularizers.l2(0.001),
+                       activation=tf.nn.relu),
+    keras.layers.Dense(1, activation=tf.nn.sigmoid)
+])
+
+l2_model.compile(optimizer='adam',
+                 loss='binary_crossentropy',
+                 metrics=['accuracy', 'binary_crossentropy'])
+
+l2_model_history = l2_model.fit(train_data, train_labels,
+                                epochs=20,
+                                batch_size=512,
+                                validation_data=(test_data, test_labels),
+                                verbose=2)
+
+# L2(0.001) meanse that every coefficient in weight matrix of layer will add 0.001 * weight_coefficient_value**2 to total loss of network
+# because penalty is only added at training, loss will be higher at training rather than at testing
+
+plot_history([('baseline', baseline_history),
+              ('l2', l2_model_history)])
+
+# Dropout: a common and effective regularization technique for neural networks
+# consists of randomly "dropping out" (set to zero) of a number of output features of layer during training
+# if layer would normally return vector [0.2, 0.5, 1.3, 0.8, 1.1] for given input sample during training
+# after droput: [0, 0.5, 1.3, 0, 1.1]
+# dropout rate is fraction of features that have been zeroed out, usually between 0.2 and 0.5
+# at test time, no units are dropped out, instead layers output values are scaled down by factor equal to dropout rate
+
+dpt_model = keras.models.Sequential([
+    keras.layers.Dense(16, activation=tf.nn.relu, input_shape=(NUM_WORDS,)),
+    keras.layers.Dropout(0.5),
+    keras.layers.Dense(16, activation=tf.nn.relu),
+    keras.layers.Dropout(0.5),
+    keras.layers.Dense(1, activation=tf.nn.sigmoid)
+])
+
+dpt_model.compile(optimizer='adam',
+                  loss='binary_crossentropy',
+                  metrics=['accuracy','binary_crossentropy'])
+
+dpt_model_history = dpt_model.fit(train_data, train_labels,
+                                  epochs=20,
+                                  batch_size=512,
+                                  validation_data=(test_data, test_labels),
+                                  verbose=2)
+
+plot_history([('baseline', baseline_history),
+              ('dropout', dpt_model_history)])
+
+# to prevent overfitting you can:
+# get more training data
+# reduce capacity of network
+# add weight regularization
+# add dropout
+
+# also look at data-augmentation and batch normalization
