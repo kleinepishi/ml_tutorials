@@ -48,3 +48,18 @@ layers.Dense(64, kernel_initializer='orthogonal')
 
 # A linear layer with a bias vector initialized to 2.0s:
 layers.Dense(64, bias_initializer=tf.keras.initializers.constant(2.0))
+
+# train and evaluate
+# configure learning process of model by calling compile method
+
+model = tf.keras.Sequential([
+# Adds a densely-connected layer with 64 units to the model:
+layers.Dense(64, activation='relu', input_shape=(32,)),
+# Add another:
+layers.Dense(64, activation='relu'),
+# Add a softmax layer with 10 output units:
+layers.Dense(10, activation='softmax')])
+
+model.compile(optimizer=tf.train.AdamOptimizer(0.001),
+              loss='categorical_crossentropy',
+              metrics=['accuracy'])
