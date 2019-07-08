@@ -104,3 +104,50 @@ model.load_weights('./checkpoints/my_checkpoint')
 
 loss,acc = model.evaluate(test_images, test_labels)
 print("Restored model, accuracy: {:5.2f}%".format(100*acc))
+
+# save entire model, contains weight values, model config, and optimizer config
+# allows for checkpointing of model and resume training later
+# can save fully functional models and run in web browsers, or on mobile device.
+
+model = create_model()
+
+model.fit(train_images, train_labels, epochs=5)
+
+# save entire model as HDF5
+model.save('my_model.h5')
+
+# reconstruct model from above file
+new_model = keras.models.load_model('my_model.h5')
+new_model.summary()
+
+# check accuracy
+loss, acc = new_model.evaluate(test_images, test_labels)
+print("Restored model, accuracy: {:5.2f}%".format(100*acc))
+
+# keras saves model(s) by inspecting the architecture, cannot save TensorFlow optimizers tho
+# need to recompile model after loading, otherwise you'll lose state of optimizer
+
+# as a saved_model
+model = create_model()
+
+model.fit(train_images, train_labels, epochs=5)
+
+import time
+saved_model_path = "./saved_models/"+str(int(time.time()))
+tf.contrib.saved_model.save_keras_model(model, saved_model_path)
+
+# load fresh keras model from saved state
+new_model = tf.contrib.saved_model.load_keras_model(saved_model_path)
+new_model.summary()
+
+# run restored model
+# must be compiled before evaluation
+# not required if saved model is only being deployed
+
+new_model.compile(optimizer=tf.keras.optimizers.Adam(),
+              loss=tf.keras.losses.sparse_categorical_crossentropy,
+              metrics=['accuracy'])
+
+# Evaluate the restored model.
+loss, acc = new_model.evaluate(test_images, test_labels)
+print("Restored model, accuracy: {:5.2f}%".format(100*acc))
