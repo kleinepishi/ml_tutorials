@@ -70,3 +70,37 @@ print("Untrained model, accuracy: {:5.2f}%".format(100*acc))
 model.load_weights(checkpoint_path)
 loss, acc = model.evaluate(test_images, test_labels)
 print("Restored model, accuracy: {:5.2f}%".format(100*acc))
+
+# checkpoint callback options
+# allows you to give the resulting checkpoints unique names, and adjust frequency of checkpoints
+# train new model, save checkpoint every 5 epochs
+
+checkpoint_path = "training_2/cp-{epoch:04d}.ckpt"
+checkpoint_dir = os.path.dirname(checkpoint_path)
+
+cp_callback = tf.keras.callbacks.ModelCheckpoint(
+    checkpoint_path, verbose=1, save_weights_only=True,
+    # save weights every 5 epochs
+    period=5)
+
+model = create_model()
+model.save_weights(checkpoint_path.format(epoch=0))
+model.fit(train_images, train_labels, epochs=50, callbacks=[cp_callback], validation_data=(test_images, test_labels),verbose=0)
+
+latest = tf.train.latest_checkpoint(checkpoint_dir)
+
+model = create_model()
+model.load_weights(latest)
+loss, acc = model.evaluate(test_images, test_labels)
+print("Restored model, accuracy: {:5.2f}%".format(100*acc))
+
+# manually save weights:
+# Save the weights
+model.save_weights('./checkpoints/my_checkpoint')
+
+# Restore the weights
+model = create_model()
+model.load_weights('./checkpoints/my_checkpoint')
+
+loss,acc = model.evaluate(test_images, test_labels)
+print("Restored model, accuracy: {:5.2f}%".format(100*acc))
