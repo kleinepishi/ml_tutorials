@@ -9,7 +9,6 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
-print(tf.VERSION)
 print(tf.keras.__version__)
 
 # build simple sequential model
